@@ -268,3 +268,32 @@ exports.getFollowing = async (req, res) => {
         });
     }
 }
+
+
+
+exports.updateProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }   
+        const { name,email,avatar } = req.body;
+        user.name = name;
+        user.email = email;
+        user.avatar = avatar;
+        await user.save();
+        res.status(200).json({
+            success: true,
+            message: 'Profile updated successfully',
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+}
