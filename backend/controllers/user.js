@@ -136,3 +136,88 @@ exports.updatePassword = async (req, res) => {
         });
     }
 }
+
+
+
+
+exports.followUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
+        if (user._id.toString() === req.user._id.toString()) {
+            return res.status(400).json({
+                success: false,
+                message: 'You cannot follow yourself',
+            });
+        }
+
+        if (user.followers.includes(req.user._id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'You already follow this user',
+            });
+        }
+        user.followers.push(req.user._id);
+        await user.save();
+        console.log("User followed");
+        res.status(200).json({
+            success: true,
+            message: 'User followed',
+        });
+
+        const user2 = await User.findById(req.user._id);
+        user2.following.push(user._id);
+        await user2.save();
+    } 
+    
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+}
+
+exports.unfollowUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+        if (user._id.toString() === req.user._id.toString()) {
+            return res.status(400).json({
+                success: false,
+                message: 'You cannot unfollow yourself',
+            });
+        }
+        if (!user.followers.includes(req.user._id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'You do not follow this user',
+            });
+        }
+        const index = user.followers.indexOf(req.user._id);
+        user.followers.splice(index, 1);
+        await user.save();
+        res.status(200).json({
+            success: true,
+            message: 'User unfollowed',
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+}
