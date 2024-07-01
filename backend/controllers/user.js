@@ -165,7 +165,6 @@ exports.followUser = async (req, res) => {
         }
         user.followers.push(req.user._id);
         await user.save();
-        console.log("User followed");
         res.status(200).json({
             success: true,
             message: 'User followed',
@@ -208,10 +207,17 @@ exports.unfollowUser = async (req, res) => {
         const index = user.followers.indexOf(req.user._id);
         user.followers.splice(index, 1);
         await user.save();
+        
         res.status(200).json({
             success: true,
             message: 'User unfollowed',
         });
+
+        const user2 = await User.findById(req.user._id);
+        const index2 = user2.following.indexOf(user._id);
+        user2.following.splice(index2, 1);
+        await user2.save();
+        
     }
     catch (error) {
         res.status(500).json({
@@ -343,3 +349,45 @@ exports.deleteUser = async (req, res) => {
         });
     }
 }
+
+
+exports.getUserProfile = async (req, res) => {
+    try {
+        const loggedInUser = await User.findById(req.user._id);
+        if (!loggedInUser.following.includes(req.params.id)) {
+            const user = await User.findById(req.params.id).select('-email -followers -following -__v -posts');
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'User not found',
+                });
+            }
+            res.status(200).json({
+                success: true,
+                user,
+                message:"Follow to see more details"
+            });
+        }
+        else {
+            const user = await User.findById(req.params.id).select('-email -__v ');
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'User not found',
+                });
+            }
+            res.status(200).json({
+                success: true,
+                user,
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+}
+
+
