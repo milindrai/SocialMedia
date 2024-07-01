@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+require('dotenv').config({ path: 'backend/config/config.env' });
 
 exports.connectDatabase = () => {
     mongoose
@@ -8,3 +9,4 @@ exports.connectDatabase = () => {
         })
         .catch(err => console.log(err));
 };
+
