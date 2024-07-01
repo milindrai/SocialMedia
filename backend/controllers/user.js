@@ -1,6 +1,5 @@
 const User = require('../models/User');
-const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
+const Post = require('../models/Post');
 
 
 exports.register = async (req, res) => {
@@ -25,19 +24,19 @@ exports.register = async (req, res) => {
             }
         });
 
-        
+
         const options = {
-            expires: new Date(Date.now() + 90*24*60*60*1000),
+            expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
             httpOnly: true,
         };
 
         const token = await user.generateToken();
-        res.status(201).cookie("token",token,options).json({
+        res.status(201).cookie("token", token, options).json({
             success: true,
             user,
             token,
         });
-        
+
 
     } catch (error) {
         res.status(500).json({
@@ -65,14 +64,14 @@ exports.login = async (req, res) => {
                 message: 'Invalid password',
             });
         }
-      
+
         const options = {
-            expires: new Date(Date.now() + 90*24*60*60*1000),
+            expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
             httpOnly: true,
         };
 
         const token = await user.generateToken();
-        res.status(200).cookie("token",token,options).json({
+        res.status(200).cookie("token", token, options).json({
             success: true,
             user,
             token,
@@ -175,8 +174,8 @@ exports.followUser = async (req, res) => {
         const user2 = await User.findById(req.user._id);
         user2.following.push(user._id);
         await user2.save();
-    } 
-    
+    }
+
     catch (error) {
         res.status(500).json({
             success: false,
@@ -279,8 +278,8 @@ exports.updateProfile = async (req, res) => {
                 success: false,
                 message: 'User not found',
             });
-        }   
-        const { name,email,avatar } = req.body;
+        }
+        const { name, email, avatar } = req.body;
         user.name = name;
         user.email = email;
         user.avatar = avatar;
@@ -291,6 +290,39 @@ exports.updateProfile = async (req, res) => {
         });
     }
     catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+}
+
+
+exports.deleteUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+        await User.findByIdAndDelete(req.user._id);
+        res.cookie('token', null, {
+            expires: new Date(Date.now()),
+            httpOnly: true,
+        });
+
+        const posts = await Post.find({ owner: req.user._id });
+        for (let i = 0; i < posts.length; i++) {
+            await Post.findByIdAndDelete(posts[i]._id);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'User deleted successfully',
+        });
+    } catch (error) {
         res.status(500).json({
             success: false,
             message: error.message,
