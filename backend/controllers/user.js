@@ -221,3 +221,50 @@ exports.unfollowUser = async (req, res) => {
         });
     }
 }
+
+
+exports.getFollowers = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+        const followers = await User.find({ _id: { $in: user.followers } }).select('-email -followers -following -__v -posts');
+        res.status(200).json({
+            success: true,
+            followers,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+}
+
+exports.getFollowing = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+        const following = await User.find({ _id: { $in: user.following } }).select('-email -followers -following -__v -posts');
+        res.status(200).json({
+            success: true,
+            following,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+}
