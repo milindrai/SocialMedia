@@ -318,6 +318,20 @@ exports.deleteUser = async (req, res) => {
             await Post.findByIdAndDelete(posts[i]._id);
         }
 
+        const followers = await User.find({ _id: { $in: user.followers } });
+        for (let i = 0; i < followers.length; i++) {
+            const index = followers[i].following.indexOf(req.user._id);
+            followers[i].following.splice(index, 1);
+            await followers[i].save();
+        }
+
+        const following = await User.find({ _id: { $in: user.following } });
+        for (let i = 0; i < following.length; i++) {
+            const index = following[i].followers.indexOf(req.user._id);
+            following[i].followers.splice(index, 1);
+            await following[i].save();
+        }
+
         res.status(200).json({
             success: true,
             message: 'User deleted successfully',
